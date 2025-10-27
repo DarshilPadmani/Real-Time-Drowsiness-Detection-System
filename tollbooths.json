@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "name": "Tollbooth A",
+        "lat": 28.7041,
+        "lon": 77.1025
+    },
+    {
+        "id": 2,
+        "name": "Tollbooth B",
+        "lat": 28.5355,
+        "lon": 77.3910
+    },
+    {
+        "id": 3,
+        "name": "Tollbooth C",
+        "lat": 28.4595,
+        "lon": 77.0266
+    }
+]

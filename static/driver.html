@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Driver Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px
+        }
+
+        #alerts {
+            margin-top: 1rem
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Driver Dashboard</h2>
+    <label>Driver ID: <input id="driverId" value="driver1"></label>
+    <button id="startBtn">Start Detection</button>
+    <button id="stopBtn">Stop Detection</button>
+
+    <p>Geolocation: <span id="geo">unknown</span></p>
+
+    <div id="alerts"></div>
+
+    <audio id="alarmAudio" src="/Alert.wav"></audio>
+
+    <script>
+        let watchId = null;
+        let driverIdInput = document.getElementById('driverId');
+        let geoSpan = document.getElementById('geo');
+        let alertsDiv = document.getElementById('alerts');
+        let alarmAudio = document.getElementById('alarmAudio');
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const driver_id = driverIdInput.value || 'driver1';
+            fetch('/start_detection', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ driver_id }) })
+                .then(() => {
+                    startGeolocation(driver_id);
+                })
+        })
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            fetch('/stop_detection', { method: 'POST' });
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+        })
+
+        function startGeolocation(driver_id) {
+            if (!('geolocation' in navigator)) return alert('Geolocation not supported');
+            watchId = navigator.geolocation.watchPosition((pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                geoSpan.textContent = lat.toFixed(5) + ', ' + lon.toFixed(5);
+                fetch('/driver/location', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ driver_id, lat, lon, ts: Date.now() / 1000 }) });
+            }, (err) => console.error(err), { enableHighAccuracy: true, maximumAge: 10000 });
+        }
+
+        // SSE for alerts
+        const evtSource = new EventSource('/alerts/stream');
+        evtSource.onmessage = function (e) {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg.type === 'alert') {
+                    const alert = msg.alert;
+                    const notif = msg.notification;
+                    const d = new Date(alert.ts * 1000).toLocaleString();
+                    const el = document.createElement('div');
+                    el.innerHTML = `<b>Alert for ${alert.driver_id}</b> at ${d} | loc: ${alert.lat}, ${alert.lon} <br>${notif.message}`;
+                    alertsDiv.prepend(el);
+                    // if it's for this driver, play sound and popup
+                    if (alert.driver_id === driverIdInput.value) {
+                        alarmAudio.play().catch(() => { });
+                        alert('Drowsiness detected!');
+                    }
+                }
+            } catch (err) { console.error(err) }
+        };
+    </script>
+</body>
+
+</html>

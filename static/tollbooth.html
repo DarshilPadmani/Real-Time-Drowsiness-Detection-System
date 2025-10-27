@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Tollbooth Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px
+        }
+
+        .alert {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 8px
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Tollbooth Dashboard (Receiver)</h2>
+    <div id="list"></div>
+
+    <script>
+        const list = document.getElementById('list');
+        const evtSource = new EventSource('/alerts/stream');
+        evtSource.onmessage = function (e) {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg.type === 'alert') {
+                    const alert = msg.alert;
+                    const notif = msg.notification;
+                    const d = new Date(alert.ts * 1000).toLocaleString();
+                    const el = document.createElement('div');
+                    el.className = 'alert';
+                    const maps = (alert.lat && alert.lon) ? `<a target='_blank' href='https://www.google.com/maps/search/?api=1&query=${alert.lat},${alert.lon}'>View</a>` : 'No location';
+                    el.innerHTML = `<b>${notif.toll_name || 'Unknown Toll'}</b> | ${d}<br>Driver: ${alert.driver_id} | ${maps}<br>${notif.message}`;
+                    list.prepend(el);
+                }
+            } catch (err) { console.error(err) }
+        };
+    </script>
+</body>
+
+</html>

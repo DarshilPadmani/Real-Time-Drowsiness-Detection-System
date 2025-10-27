@@ -1,0 +1,83 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+test_env/
+test_env_virtualenv/
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Unit test / coverage outputs
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Jupyter
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.*
+
+# C extensions
+*.so
+*.pyd
+
+# Machine learning models
+*.h5
+*.pt
+*.pth
+
+# Others
+*.pyc
+*.pyo
+
+# Ignore virtual env folders that may accidentally be added
+.venv/
+
+# Ignore local IDE run configs
+.run/
+
+# Keep backups
+*~
+
+# node_modules in frontend
+frontend/node_modules/
+
+# Windows thumbnail cache
+Thumbs.db
+
+# Ignore Python egg caches
+.eggs/
+
+# Ignore pip log
+pip-log.txt

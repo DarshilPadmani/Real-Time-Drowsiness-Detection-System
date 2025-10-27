@@ -1,0 +1,47 @@
+[
+    {
+        "id": 1,
+        "name": "Tollbooth A - Delhi Gate",
+        "lat": 28.7041,
+        "lon": 77.1025,
+        "contact_endpoint": "http://tollbooth-a.example.com/alert",
+        "phone": "+91-11-2345-6789",
+        "address": "Delhi Gate, New Delhi"
+    },
+    {
+        "id": 2,
+        "name": "Tollbooth B - Gurgaon Expressway",
+        "lat": 28.5355,
+        "lon": 77.3910,
+        "contact_endpoint": "http://tollbooth-b.example.com/alert",
+        "phone": "+91-124-456-7890",
+        "address": "Gurgaon Expressway, Haryana"
+    },
+    {
+        "id": 3,
+        "name": "Tollbooth C - Noida Sector 18",
+        "lat": 28.4595,
+        "lon": 77.0266,
+        "contact_endpoint": "http://tollbooth-c.example.com/alert",
+        "phone": "+91-120-123-4567",
+        "address": "Noida Sector 18, Uttar Pradesh"
+    },
+    {
+        "id": 4,
+        "name": "Tollbooth D - Faridabad",
+        "lat": 28.4089,
+        "lon": 77.3178,
+        "contact_endpoint": "http://tollbooth-d.example.com/alert",
+        "phone": "+91-129-234-5678",
+        "address": "Faridabad, Haryana"
+    },
+    {
+        "id": 5,
+        "name": "Tollbooth E - Ghaziabad",
+        "lat": 28.6692,
+        "lon": 77.4538,
+        "contact_endpoint": "http://tollbooth-e.example.com/alert",
+        "phone": "+91-120-345-6789",
+        "address": "Ghaziabad, Uttar Pradesh"
+    }
+]
