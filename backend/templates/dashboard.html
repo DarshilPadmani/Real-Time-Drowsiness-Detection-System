@@ -1,245 +1,52 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Booth Dashboard</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
-        integrity="sha384-mA32C8+8d8N1d2Hc0gCC4v+g1G3iMZQb1pXlJjQF2xq6mU7w06yWyrfXq3a6v8mX"
-        crossorigin="anonymous"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-        }
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drowsiness Detection Dashboard</title>
 
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            border-bottom: 1px solid #1f2937;
-            background: #0b1220;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        header .title {
-            font-weight: 700;
-        }
-
-        header .meta {
-            color: #94a3b8;
-            font-size: 13px;
-        }
-
-        header a {
-            color: #e2e8f0;
-            text-decoration: none;
-            padding: 8px 12px;
-            border: 1px solid #374151;
-            border-radius: 8px;
-        }
-
-        main {
-            display: grid;
-            grid-template-columns: 360px 1fr;
-            gap: 16px;
-            padding: 16px;
-        }
-
-        @media (max-width: 1000px) {
-            main {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .panel {
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .panel h2 {
-            font-size: 16px;
-            margin: 0;
-            padding: 12px 14px;
-            border-bottom: 1px solid #1f2937;
-            background: #0b1220;
-        }
-
-        #notifications {
-            max-height: calc(100vh - 140px);
-            overflow: auto;
-        }
-
-        .alert-item {
-            padding: 12px 14px;
-            border-bottom: 1px solid #1f2937;
-        }
-
-        .alert-item:last-child {
-            border-bottom: none;
-        }
-
-        .alert-title {
-            font-weight: 600;
-        }
-
-        .alert-sub {
-            font-size: 12px;
-            color: #9ca3af;
-        }
-
-        #map {
-            height: calc(100vh - 100px);
-            width: 100%;
-            border-radius: 12px;
-        }
-
-        .legend {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: rgba(17, 24, 39, 0.9);
-            border: 1px solid #1f2937;
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 12px;
-        }
-
-        .dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-
-        .dot.booth {
-            background: #3b82f6;
-        }
-
-        .dot.driver {
-            background: #ef4444;
-        }
-    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 
 <body>
-    <header>
-        <div>
-            <div class="title">Tollbooth Dashboard</div>
-            <div class="meta">Signed in as <strong>{{ booth.name }}</strong> ({{ booth.username }})</div>
-        </div>
-        <a href="/logout">Logout</a>
+    <header class="app-header">
+        <h1>Real-Time Drowsiness Detection</h1>
+        <div class="status-dot online">Live</div>
     </header>
-    <main>
-        <section class="panel" id="notifPanel">
-            <h2>Notifications</h2>
-            <div id="notifications"></div>
-        </section>
-        <section class="panel">
-            <h2>Map</h2>
-            <div id="map"></div>
-            <div class="legend">
-                <div><span class="dot booth"></span>Booth</div>
-                <div><span class="dot driver"></span>Driver</div>
+
+    <main class="app-grid">
+        <section class="cards">
+            <div class="card">
+                <div class="card-title">Total Alerts</div>
+                <div id="total-count" class="card-value">0</div>
             </div>
+            <div class="card">
+                <div class="card-title">Today</div>
+                <div id="today-count" class="card-value">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Active Drivers</div>
+                <div id="active-count" class="card-value">0</div>
+            </div>
+        </section>
+
+        <section class="map-panel">
+            <div id="map"></div>
+        </section>
+
+        <section class="alerts-panel">
+            <div class="panel-header">
+                <h2>Live Alerts</h2>
+            </div>
+            <ul id="alert-list" class="alert-list"></ul>
         </section>
     </main>
 
-    <script>
-        const booth = { id: {{ booth.id }}, name: { { booth.name | tojson } }, lat: { { booth.latitude } }, lon: { { booth.longitude } } };
-
-        // Map setup
-        const map = L.map('map').setView([booth.lat, booth.lon], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        const boothMarker = L.marker([booth.lat, booth.lon], { title: booth.name, alt: booth.name, opacity: 0.95 }).addTo(map);
-        boothMarker.bindPopup(`<b>${booth.name}</b>`);
-
-        let driverMarker = null;
-        let routeLine = null;
-
-        function setDriver(lat, lon, popupText) {
-            if (!driverMarker) {
-                driverMarker = L.marker([lat, lon], {
-                    title: 'Driver',
-                    alt: 'Driver',
-                    opacity: 0.95,
-                    icon: L.icon({
-                        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                        popupAnchor: [1, -34],
-                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-                        shadowSize: [41, 41]
-                    })
-                }).addTo(map);
-            }
-            driverMarker.setLatLng([lat, lon]);
-            if (popupText) driverMarker.bindPopup(popupText).openPopup();
-
-            // Draw/Update line between booth and driver
-            const points = [[booth.lat, booth.lon], [lat, lon]];
-            if (!routeLine) {
-                routeLine = L.polyline(points, { color: '#ef4444', weight: 3, opacity: 0.7 }).addTo(map);
-            } else {
-                routeLine.setLatLngs(points);
-            }
-
-            // Fit bounds smoothly
-            const bounds = L.latLngBounds(points);
-            map.flyToBounds(bounds.pad(0.25), { duration: 1.0, easeLinearity: 0.25 });
-        }
-
-        function addAlertItem(alert) {
-            const container = document.getElementById('notifications');
-            const el = document.createElement('div');
-            el.className = 'alert-item';
-            const title = `Driver ${alert.driver_id} is drowsy near (${alert.latitude.toFixed(4)}, ${alert.longitude.toFixed(4)})`;
-            const sub = `Time: ${new Date(alert.timestamp).toLocaleString()}  •  Distance: ${alert.distance_km ?? ''} km`;
-            el.innerHTML = `<div class="alert-title">${title}</div><div class="alert-sub">${sub}</div>`;
-            container.prepend(el);
-        }
-
-        // Load recent alerts for this booth on page load
-        fetch('/api/my_alerts').then(r => r.json()).then(list => {
-            list.forEach(a => addAlertItem(a));
-            if (list.length) {
-                const top = list[0];
-                setDriver(top.latitude, top.longitude, `Latest alert: ${top.driver_id}`);
-            }
-        }).catch(() => { });
-
-        // Socket.IO: session cookie will carry auth, server joins our room on connect
-        const socket = io();
-        socket.on('connect', () => {
-            // Connected; server puts us in booth-specific room
-        });
-
-        socket.on('drowsiness_alert', (data) => {
-            if (Number(data.tollbooth_id) !== booth.id) return; // extra guard
-            addAlertItem(data);
-            setDriver(Number(data.latitude), Number(data.longitude), `Drowsiness detected for ${data.driver_id}`);
-        });
-    </script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/dashboard.js"></script>
 </body>
 
 </html>

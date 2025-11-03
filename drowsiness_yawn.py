@@ -12,6 +12,7 @@ import dlib
 import cv2
 import playsound
 import os
+import requests
 
 
 def sound_alarm(path):
@@ -66,9 +67,15 @@ def lip_distance(shape):
 
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-w", "--webcam", type=int, default=0,
-                help="index of webcam on system")
+ap.add_argument("-w", "--webcam", type=int, default=0, help="index of webcam on system")
 ap.add_argument("-a", "--alarm", type=str, default="Alert.wav", help="path alarm .WAV file")
+ap.add_argument("--shape-predictor", type=str, default="shape_predictor_68_face_landmarks.dat",
+                help="path to dlib shape predictor file")
+ap.add_argument("--server", type=str, default="http://localhost:5000/api/alert",
+                help="backend server URL for storing alerts (expects driver_id, latitude, longitude, status)")
+ap.add_argument("--driver-id", type=str, default="driver1", help="driver id to include in alert posts")
+ap.add_argument("--lat", type=float, default=0.0, help="latitude to include with alerts (default 0.0)")
+ap.add_argument("--lon", type=float, default=0.0, help="longitude to include with alerts (default 0.0)")
 args = vars(ap.parse_args())
 
 EYE_AR_THRESH = 0.3
@@ -82,17 +89,101 @@ COUNTER = 0
 print("-> Loading the predictor and detector...")
 #detector = dlib.get_frontal_face_detector()
 detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")    #Faster but less accurate
-predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+predictor_path = args.get("shape_predictor") or 'shape_predictor_68_face_landmarks.dat'
+if not os.path.exists(predictor_path):
+    raise FileNotFoundError(f"Shape predictor file not found: {predictor_path}")
+predictor = dlib.shape_predictor(predictor_path)
+
+
+def send_alert_to_server(driver_id: str, lat: float, lon: float, status: str):
+    url = args.get("server")
+    payload = {
+        "driver_id": driver_id,
+        "latitude": lat,
+        "longitude": lon,
+        "status": status,
+    }
+    try:
+        resp = requests.post(url, json=payload, timeout=5)
+        print(f"POST {url} -> {resp.status_code}: {resp.text}")
+    except Exception as e:
+        print(f"Failed to POST alert to {url}: {e}")
 
 
 print("-> Starting Video Stream")
-vs = VideoStream(src=args["webcam"]).start()
-#vs= VideoStream(usePiCamera=True).start()       //For Raspberry Pi
-time.sleep(1.0)
+# Prefer explicit VideoCapture on Windows so we can select a working backend (DirectShow)
+if os.name == 'nt':
+    cap = cv2.VideoCapture(args["webcam"], cv2.CAP_DSHOW)
+else:
+    cap = cv2.VideoCapture(args["webcam"])
+
+if not cap.isOpened():
+    # fallback to imutils VideoStream if cv2 backend fails
+    print("Warning: cv2.VideoCapture failed to open camera, falling back to imutils.VideoStream")
+    vs = VideoStream(src=args["webcam"]).start()
+    time.sleep(1.0)
+    use_cap = False
+else:
+    use_cap = True
+    time.sleep(1.0)
+
+
+def _server_location_url(server_api_alert: str) -> str:
+    # derive base server URL and append /api/location
+    if server_api_alert.endswith('/api/alert'):
+        return server_api_alert[:-len('/api/alert')] + '/api/location'
+    # strip trailing slash if present
+    if server_api_alert.endswith('/'):
+        return server_api_alert + 'api/location'
+    return server_api_alert + '/api/location'
+
+
+def _periodic_location_sender(driver_id: str, lat: float, lon: float, server_api_alert: str, interval: float = 5.0):
+    url = _server_location_url(server_api_alert)
+    while True:
+        payload = {
+            'driver_id': driver_id,
+            'latitude': lat,
+            'longitude': lon,
+        }
+        try:
+            resp = requests.post(url, json=payload, timeout=5)
+            # print minimal status to avoid overwhelming stdout
+            print(f"location -> {resp.status_code}", end='\r')
+        except Exception as e:
+            print(f"Failed to send location to {url}: {e}")
+        time.sleep(interval)
+
+
+# Start periodic location updates in background if lat/lon were provided
+try:
+    driver_id_arg = args.get('driver_id')
+    lat_arg = float(args.get('lat') or 0.0)
+    lon_arg = float(args.get('lon') or 0.0)
+    server_arg = args.get('server')
+    # only spawn if non-zero coordinates or driver_id provided
+    if driver_id_arg and (lat_arg != 0.0 or lon_arg != 0.0):
+        tloc = Thread(target=_periodic_location_sender, args=(driver_id_arg, lat_arg, lon_arg, server_arg, 5.0), daemon=True)
+        tloc.start()
+except Exception:
+    pass
 
 while True:
 
-    frame = vs.read()
+    if use_cap:
+        ret, frame = cap.read()
+        if not ret or frame is None:
+            # don't crash; loop and try again
+            print("Warning: couldn't read frame from camera (ret=False). Retrying...")
+            time.sleep(0.1)
+            continue
+    else:
+        frame = vs.read()
+        if frame is None:
+            print("Warning: imutils VideoStream returned no frame. Retrying...")
+            time.sleep(0.1)
+            continue
+
     frame = imutils.resize(frame, width=450)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -135,6 +226,12 @@ while True:
                     t.daemon = True
                     t.start()
 
+                    # send drowsiness alert to backend
+                    try:
+                        send_alert_to_server(args.get("driver_id"), args.get("lat"), args.get("lon"), "drowsiness")
+                    except Exception:
+                        pass
+
                 cv2.putText(frame, "DROWSINESS ALERT!", (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
@@ -152,6 +249,12 @@ while True:
                                    args=(args["alarm"],))
                     t.daemon = True
                     t.start()
+
+                    # send yawn alert to backend
+                    try:
+                        send_alert_to_server(args.get("driver_id"), args.get("lat"), args.get("lon"), "yawn")
+                    except Exception:
+                        pass
         else:
             alarm_status2 = False
 
@@ -161,8 +264,22 @@ while True:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
 
-    cv2.imshow("Frame", frame)
-    key = cv2.waitKey(1) & 0xFF
+    try:
+      cv2.imshow("Frame", frame)
+      key = cv2.waitKey(1) & 0xFF
+    except cv2.error as e:
+      # Common cause: OpenCV was installed without GUI support (headless build)
+      print("\nERROR: cv2.imshow is not available in this OpenCV build.\n" \
+          "This usually means you have a headless OpenCV package installed (no GUI support)\n" \
+          "or you're running in a headless environment (WSL without X server, remote session, etc.).\n")
+      print("cv2 error details:", e)
+      print("\nQuick fixes:")
+      print("  1) If you're on Windows PowerShell and want a GUI, install the non-headless OpenCV package:\n"
+          "     pip uninstall -y opencv-python-headless\n"
+          "     pip install --upgrade --force-reinstall opencv-python\n")
+      print("  2) If you're running under WSL or a headless server, either run the script using native Windows Python\n"
+          "     or set up an X server / use a virtual display, or remove GUI calls and save frames to disk instead.\n")
+      break
 
     if key == ord("q"):
         break

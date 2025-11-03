@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register New Tollbooth</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 8px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #9ca3af;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            background: #0b1220;
+            color: #e5e7eb;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .row {
+            margin-bottom: 18px;
+        }
+
+        .row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            background: #2563eb;
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #374151;
+            color: #e2e8f0;
+            margin-top: 12px;
+        }
+
+        .btn-secondary:hover {
+            background: #1f2937;
+            border-color: #4b5563;
+        }
+
+        .error {
+            color: #fca5a5;
+            font-size: 13px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(248, 113, 113, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+
+        .success {
+            color: #86efac;
+            font-size: 13px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .help-text {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .link {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>Register New Tollbooth</h1>
+        <p class="subtitle">Create an account for your tollbooth operator dashboard</p>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+        <div class="success">{{ success }}</div>
+        {% endif %}
+
+        <form method="POST" action="/register" id="registerForm">
+            <div class="row">
+                <label for="name">Tollbooth Name *</label>
+                <input id="name" name="name" type="text" placeholder="e.g., Ahmedabad Toll Plaza" required />
+                <div class="help-text">Official name of your tollbooth</div>
+            </div>
+
+            <div class="row">
+                <label for="username">Username *</label>
+                <input id="username" name="username" type="text" placeholder="e.g., ahd_booth" required
+                    pattern="[a-zA-Z0-9_]+" title="Only letters, numbers, and underscores allowed" />
+                <div class="help-text">Choose a unique username (letters, numbers, underscore only)</div>
+            </div>
+
+            <div class="row">
+                <label for="password">Password *</label>
+                <input id="password" name="password" type="password" placeholder="Enter a strong password" required
+                    minlength="6" />
+                <div class="help-text">Minimum 6 characters</div>
+            </div>
+
+            <div class="row">
+                <label for="password_confirm">Confirm Password *</label>
+                <input id="password_confirm" name="password_confirm" type="password" placeholder="Re-enter password"
+                    required />
+            </div>
+
+            <div class="row">
+                <label for="latitude">Latitude *</label>
+                <input id="latitude" name="latitude" type="number" step="any" placeholder="e.g., 23.0396" required />
+                <div class="help-text">GPS latitude coordinate (-90 to 90)</div>
+            </div>
+
+            <div class="row">
+                <label for="longitude">Longitude *</label>
+                <input id="longitude" name="longitude" type="number" step="any" placeholder="e.g., 72.5660" required />
+                <div class="help-text">GPS longitude coordinate (-180 to 180)</div>
+            </div>
+
+            <button class="btn" type="submit">Create Account</button>
+            <a href="/login" class="btn btn-secondary" style="text-align: center; display: block;">Back to Login</a>
+        </form>
+    </div>
+
+    <script>
+        // Client-side password confirmation check
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password_confirm').value;
+
+            if (password !== passwordConfirm) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+
+            // Validate latitude/longitude ranges
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lon = parseFloat(document.getElementById('longitude').value);
+
+            if (lat < -90 || lat > 90) {
+                e.preventDefault();
+                alert('Latitude must be between -90 and 90');
+                return false;
+            }
+
+            if (lon < -180 || lon > 180) {
+                e.preventDefault();
+                alert('Longitude must be between -180 and 180');
+                return false;
+            }
+        });
+
+        // Optional: Add "Get Current Location" button functionality
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                }, function (error) {
+                    alert('Could not get your location. Please enter coordinates manually.');
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        }
+    </script>
+</body>
+
+</html>
+
