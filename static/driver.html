@@ -54,7 +54,12 @@
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
                 geoSpan.textContent = lat.toFixed(5) + ', ' + lon.toFixed(5);
-                fetch('/driver/location', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ driver_id, lat, lon, ts: Date.now() / 1000 }) });
+                const body = JSON.stringify({ driver_id, latitude: lat, longitude: lon, ts: Date.now() / 1000, accuracy: pos.coords.accuracy });
+                // Post to both endpoints for compatibility:
+                //  - /driver/location (top-level app.py)
+                //  - /api/location (backend app)
+                fetch('/driver/location', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => { });
+                fetch('/api/location', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => { });
             }, (err) => console.error(err), { enableHighAccuracy: true, maximumAge: 10000 });
         }
 

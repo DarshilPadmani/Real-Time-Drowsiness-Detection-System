@@ -7,13 +7,24 @@
     <title>Drowsiness Detection Dashboard</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 
 <body>
     <header class="app-header">
         <h1>Real-Time Drowsiness Detection</h1>
-        <div class="status-dot online">Live</div>
+        <div style="display:flex;align-items:center;gap:12px">
+            <div id="userDisplay" style="color:var(--muted);font-size:13px"></div>
+            <div class="auth-controls">
+                <a href="/login" class="auth-link" title="Tollbooth login">Toll Login</a>
+                <a href="/tollbooth" class="auth-link">Register</a>
+                <a id="logoutBtn" href="/logout" style="display:none">Log Out</a>
+            </div>
+            <div class="status-dot online">Live</div>
+        </div>
     </header>
 
     <main class="app-grid">
@@ -36,6 +47,17 @@
             <div id="map"></div>
         </section>
 
+        <div class="map-legend">
+            <div class="row">
+                <div class="swatch danger"></div>
+                <div>Active Alert</div>
+            </div>
+            <div class="row">
+                <div class="swatch toll"></div>
+                <div>Tollbooth</div>
+            </div>
+        </div>
+
         <section class="alerts-panel">
             <div class="panel-header">
                 <h2>Live Alerts</h2>
@@ -46,7 +68,36 @@
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster-src.js"></script>
     <script src="/static/js/dashboard.js"></script>
+    <script>
+        // minimal auth state check for header
+        async function getMe() {
+            try {
+                const r = await fetch('/me');
+                const js = await r.json();
+                if (js.authenticated) {
+                    document.getElementById('userDisplay').textContent = js.username;
+                    document.querySelector('.auth-controls a[href="/login"]').style.display = 'none';
+                    document.querySelector('.auth-controls a[href="/signup"]').style.display = 'none';
+                    document.getElementById('logoutBtn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('userDisplay').textContent = '';
+                    document.querySelector('.auth-controls a[href="/login"]').style.display = 'inline-block';
+                    document.querySelector('.auth-controls a[href="/signup"]').style.display = 'inline-block';
+                    document.getElementById('logoutBtn').style.display = 'none';
+                }
+            } catch (e) { console.error(e) }
+        }
+        getMe();
+
+        // keep logout link behavior quick
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await fetch('/logout');
+            getMe();
+        });
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Tollbooth Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body style="background:var(--bg);color:var(--text);font-family:inherit">
+    <div style="padding:24px;max-width:1100px;margin:24px auto">
+        <h2>Tollbooth Console</h2>
+        <p>Welcome to the tollbooth operator console. You must be logged in to view alerts and nearby drivers.</p>
+        <div id="tollAlerts"></div>
+        <hr />
+        <h3>Register a Tollbooth Location</h3>
+        <form id="toll-form">
+            <div>
+                <label>Name<br><input name="name" id="tb-name" type="text" required></label>
+            </div>
+            <div>
+                <label>Latitude<br><input name="latitude" id="tb-lat" type="number" step="any" required></label>
+            </div>
+            <div>
+                <label>Longitude<br><input name="longitude" id="tb-lon" type="number" step="any" required></label>
+            </div>
+            <div>
+                <label>Address (optional)<br><input name="address" id="tb-address" type="text"></label>
+            </div>
+            <div style="margin-top:8px">
+                <button type="submit">Register Tollbooth</button>
+                <button type="button" id="use-geo">Use my browser location</button>
+            </div>
+        </form>
+        <div id="toll-result" style="margin-top:10px"></div>
+        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+        <script>
+            // simple live feed of drowsiness_alert events for tollbooth operators
+            const socket = io();
+            const el = document.getElementById('tollAlerts');
+            socket.on('drowsiness_alert', data => {
+                const d = document.createElement('div');
+                d.style.padding = '10px'; d.style.border = '1px solid #222'; d.style.marginBottom = '8px';
+                d.innerHTML = `<strong>${data.driver_id}</strong> ${data.status} @ ${data.latitude}, ${data.longitude} <br>${new Date(data.timestamp).toLocaleString()}`;
+                el.prepend(d);
+            });
+
+            // tollbooth registration form
+            const form = document.getElementById('toll-form');
+            const result = document.getElementById('toll-result');
+            form.addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                result.textContent = 'Registering...';
+                const payload = {
+                    name: document.getElementById('tb-name').value,
+                    latitude: document.getElementById('tb-lat').value,
+                    longitude: document.getElementById('tb-lon').value,
+                    address: document.getElementById('tb-address').value || undefined,
+                };
+                try {
+                    const r = await fetch('/api/tollbooth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const js = await r.json();
+                    if (!r.ok) {
+                        result.innerHTML = `<span style="color:red">Error: ${js.error || JSON.stringify(js)}</span>`;
+                    } else {
+                        result.innerHTML = `<span style="color:green">Registered: ${js.tollbooth.name}</span>`;
+                        // open the dashboard in a new tab so the operator can immediately view the toll on the map
+                        try {
+                            window.open('/dashboard', '_blank');
+                        } catch (e) { /* ignore */ }
+                        // keep the operator on this page so they can register additional tolls if needed
+                    }
+                } catch (err) {
+                    result.innerHTML = `<span style="color:red">Network error</span>`;
+                }
+            });
+
+            document.getElementById('use-geo').addEventListener('click', () => {
+                if (!navigator.geolocation) return alert('Geolocation not supported');
+                navigator.geolocation.getCurrentPosition(pos => {
+                    document.getElementById('tb-lat').value = pos.coords.latitude;
+                    document.getElementById('tb-lon').value = pos.coords.longitude;
+                }, err => alert('Could not get location: ' + err.message));
+            });
+        </script>
+    </div>
+</body>
+
+</html>
