@@ -19,9 +19,9 @@
         <div style="display:flex;align-items:center;gap:12px">
             <div id="userDisplay" style="color:var(--muted);font-size:13px"></div>
             <div class="auth-controls">
-                <a href="/login" class="auth-link" title="Tollbooth login">Login</a>
-                <a href="/tollbooth" class="auth-link" title="Register tollbooth">Register</a>
-                <a id="logoutBtn" href="#" class="auth-link" style="display:none">Sign Out</a>
+                <a href="/login" class="auth-link" title="Tollbooth login">Toll Login</a>
+                <a href="/tollbooth" class="auth-link">Register</a>
+                <a id="logoutBtn" href="/logout" style="display:none">Log Out</a>
             </div>
             <div class="status-dot online">Live</div>
         </div>
@@ -76,20 +76,16 @@
             try {
                 const r = await fetch('/me');
                 const js = await r.json();
-                const loginLink = document.querySelector('.auth-controls a[href="/login"]');
-                const registerLink = document.querySelector('.auth-controls a[href="/tollbooth"]');
-                const logoutBtn = document.getElementById('logoutBtn');
-
-                if (js && js.authenticated) {
+                if (js.authenticated) {
                     document.getElementById('userDisplay').textContent = js.username;
-                    if (loginLink) loginLink.style.display = 'none';
-                    if (registerLink) registerLink.style.display = 'inline-block';
-                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                    document.querySelector('.auth-controls a[href="/login"]').style.display = 'none';
+                    document.querySelector('.auth-controls a[href="/signup"]').style.display = 'none';
+                    document.getElementById('logoutBtn').style.display = 'inline-block';
                 } else {
                     document.getElementById('userDisplay').textContent = '';
-                    if (loginLink) loginLink.style.display = 'inline-block';
-                    if (registerLink) registerLink.style.display = 'none';
-                    if (logoutBtn) logoutBtn.style.display = 'none';
+                    document.querySelector('.auth-controls a[href="/login"]').style.display = 'inline-block';
+                    document.querySelector('.auth-controls a[href="/signup"]').style.display = 'inline-block';
+                    document.getElementById('logoutBtn').style.display = 'none';
                 }
             } catch (e) { console.error(e) }
         }
@@ -98,12 +94,7 @@
         // keep logout link behavior quick
         document.getElementById('logoutBtn').addEventListener('click', async (e) => {
             e.preventDefault();
-            try {
-                await fetch('/logout', { method: 'GET' });
-            } catch (err) {
-                console.error('Logout failed', err);
-            }
-            // refresh auth state and UI
+            await fetch('/logout');
             getMe();
         });
     </script>

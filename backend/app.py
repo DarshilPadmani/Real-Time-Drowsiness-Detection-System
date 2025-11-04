@@ -129,13 +129,8 @@ def create_app() -> Flask:
         return redirect(url_for('signup_page'))
 
     @app.route('/tollbooth')
+    @login_required
     def tollbooth():
-        # Make the tollbooth registration page publicly viewable so
-        # "Create an account" from the login page navigates directly here
-        # instead of being redirected to the login page with a next= param.
-        # Note: the API endpoint that actually registers a tollbooth
-        # (`/api/tollbooth`) remains protected and will require an
-        # authenticated session to POST.
         return render_template('tollbooth.html')
 
     @app.post("/api/alert")
